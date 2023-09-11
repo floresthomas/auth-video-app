@@ -25,6 +25,7 @@ async function upload(req, res) {
       description,
       url,
       user,
+      username: existingUser.username,
     });
 
     const videoSaved = await newVideo.save();
@@ -33,6 +34,7 @@ async function upload(req, res) {
       description: videoSaved.description,
       url: videoSaved.url,
       user: videoSaved.user,
+      username: videoSaved.username,
     });
 
     existingUser.videos.push(videoSaved._id);
@@ -53,6 +55,7 @@ async function getVideoById(req, res) {
       url: findVideo.url,
       uploadDate: findVideo.uploadDate,
       user: findVideo.user,
+      username: findVideo.username,
     });
   } catch (error) {
     res.status(500).json({ msg: error.message });
@@ -60,10 +63,15 @@ async function getVideoById(req, res) {
 }
 
 async function deleteVideoById(req, res) {
-  const { id } = req.params;
+  const { id } = req.user;
+  const videoId = req.params.id;
+
   try {
-    await Videos.findByIdAndDelete(id);
-    res.json({ msg: "Video eliminado" });
+    await User.findByIdAndUpdate(id, {
+      $pull: { videos: videoId },
+    });
+
+    res.json({ msg: "Video deleted successfully" });
   } catch (error) {
     res.status(500).json({ msg: error.message });
   }
@@ -88,15 +96,26 @@ async function likeVideos(req, res) {
   const videoId = req.params.id;
 
   try {
-    await Videos.findByIdAndUpdate(videoId, {
-      $inc: { likes: 1 },
-    });
-
     await User.findByIdAndUpdate(id, {
       $addToSet: { liked_videos: videoId },
     });
 
     res.json({ msg: "Video liked successfully" });
+  } catch (error) {
+    res.status(500).json({ msg: error.message });
+  }
+}
+
+async function removeLikeFromVideo(req, res) {
+  const { id } = req.user;
+  const videoId = req.params.id;
+
+  try {
+    await User.findByIdAndUpdate(id, {
+      $pull: { liked_videos: videoId },
+    });
+
+    res.json({ msg: "Video unliked successfully" });
   } catch (error) {
     res.status(500).json({ msg: error.message });
   }
@@ -122,4 +141,5 @@ module.exports = {
   updateVideoById,
   likeVideos,
   likedVideos,
+  removeLikeFromVideo
 };

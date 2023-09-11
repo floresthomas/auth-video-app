@@ -11,5 +11,6 @@ router.post("/upload", authRequired ,videoController.upload)
 router.delete("/:id", authRequired ,videoController.deleteVideoById)
 router.put("/:id", authRequired ,videoController.updateVideoById)
 router.put("/like/:id", authRequired ,videoController.likeVideos)
+router.put("/removelike/:id", authRequired, videoController.removeLikeFromVideo)
 
 module.exports = router;
